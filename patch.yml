@@ -1,0 +1,262 @@
+###############################################################
+---
+###############################################################
+- hosts: 127.0.0.1
+###############################################################
+  vars_prompt:
+###############################################################
+    - name: "house"
+      prompt: "Enter the path of home directory : "
+      default: "/home/dedsec"
+      private: no
+    - name: "repo"
+      prompt: "Enter the path of local repository : "
+      default: "/home/dedsec/Softwares"
+      private: no
+    - name: "script"
+      prompt: "Enter the path of script directory : "
+      default: "/home/dedsec/Scripts"
+      private: no
+###############################################################
+  tasks:
+###############################################################
+  - name: Creating A Local Repository
+    copy:
+      dest: "{{ item.dest }}"
+      content: "{{ item.content }}"
+    with_items:
+      - { dest: "/etc/yum.repos.d/google-chrome.repo", content: "[google-chrome]\nname=google-chrome\nbaseurl=http://dl.google.com/linux/chrome/rpm/stable/$basearch\nenabled=1\ngpgcheck=1\ngpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub\n" }
+      - { dest: "/etc/yum.repos.d/virtualbox.repo", content: "[virtualbox]\nname=Oracle Linux / RHEL / CentOS-$releasever / $basearch - VirtualBox\nbaseurl=http://download.virtualbox.org/virtualbox/rpm/el/$releasever/$basearch\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=https://www.virtualbox.org/download/oracle_vbox.asc\n" }
+    register: out1
+###############################################################
+  - name: Initiation
+    yum:
+      name: "{{ item.name }}"
+      state: "{{ item.state }}"
+    with_items:
+      - { name: "epel-release", state: "present"}
+      - { name: "ntfs-3g", state: "present"}
+      - { name: "python-pip", state: "present"}
+      - { name: "*", state: "latest"}
+      - { name: "gnome-python2-gnomevfs", state: "present" }
+      - { name: "{{ repo }}/rpmfusion-free-release-7.noarch.rpm", state: "present" }
+      - { name: "vlc", state: "present" }
+      - { name: "transmission-cli, transmission-common, transmission-daemon", state: "present" }
+      - { name: "terminator", state: "present" }
+      - { name: "perl-Image-ExifTool.noarch", state: "present" }
+      - { name: "unar", state: "present" }
+      - { name: "kernel-devel, kernel-headers, make, patch, gcc", state: "present" }
+      - { name: "google-chrome-stable", state: "present" }
+      - { name: "VirtualBox-6.0", state: "present" }
+      - { name: "{{ repo }}/p7zip-16.02-10.el7.x86_64.rpm", state: "present" }
+      - { name: "{{ repo }}/p7zip-plugins-16.02-10.el7.x86_64.rpm", state: "present" }
+      - { name: "{{ repo }}/bleachbit-2.2-1.1.centos7.noarch.rpm", state: "present" }
+      - { name: "{{ repo }}/nmap-7.70-1.x86_64.rpm", state: "present" }
+    register: out2
+###############################################################
+  - name: Installing VirtualBox Extension Pack
+    command: 'echo "y" | VBoxManage extpack install {{ repo }}/Oracle_VM_VirtualBox_Extension_Pack-6.0.6.vbox-extpack'
+    register: out3
+###############################################################
+  - name: Allowing Transmission Client Service Port Through Firewall
+    command: "{{ item }}"
+    with_items:
+      - firewall-cmd --zone=public --add-port=9091/tcp --permanent
+      - firewall-cmd --reload
+    register: out4
+###############################################################
+  - name: Starting And Stopping Transmission Client Service
+    systemd:
+      name: transmission-daemon.service
+      state: "{{ item }}"
+    with_items:
+      - started
+      - stopped
+    register: out5
+###############################################################
+  - name: Configuring Transmission Client Service
+    lineinfile:
+       path: /var/lib/transmission/.config/transmission-daemon/settings.json
+       backup: yes
+       regexp: "{{ item.regexp }}"
+       line: "{{ item.line }}"
+    with_items:
+      - { regexp: "rpc-authentication-required", line: '    "rpc-authentication-required": true,' }
+      - { regexp: "rpc-whitelist-enabled", line: '    "rpc-whitelist-enabled": false,' }
+      - { regexp: "rpc-username", line: '    "rpc-username": "",' }
+      - { regexp: "rpc-password", line: '    "rpc-password": "",' }
+    register: out6
+###############################################################
+  - name: Starting And Enabling Transmission Client Service At Startup
+    systemd:
+      name: transmission-daemon.service
+      state: started
+      enabled: yes
+    register: out7
+###############################################################
+  - block:
+    - name: Creating A Directory For VLC Extensions
+      file:
+        path: /usr/share/vlc/lua/extensions
+        state: directory
+        mode: "0755"
+      register: out8_1
+    - name: Installing Extensions For VLC
+      copy:
+        dest: /usr/share/vlc/lua/extensions/
+        src: "{{ repo }}/SubSync.lua"
+        remote_src: yes
+      register: out8_2
+###############################################################
+  - block:  
+    - name: Installing Sublime Text 3
+      unarchive:
+        src: "{{ repo }}/sublime_text_3_build_3207_x64.tar.bz2"
+        dest: /opt/
+        remote_src: yes
+      register: out9_1
+    - name: Creating A Symbolic Link
+      file:
+        src: /opt/sublime_text_3/sublime_text
+        dest: /usr/bin/sublime3
+        state: link 
+      register: out9_2
+    - name: Creating An Application Entry
+      copy: 
+        dest: /usr/share/applications/sublime3.desktop
+        content: "{{ item }}"
+        mode: "u+x,g+x,o+x"
+      with_items:
+        - "[Desktop Entry]\nName=Sublime3\nExec=sublime3\nTerminal=false\nIcon=/opt/sublime_text_3/Icon/48x48/sublime-text.png\nType=Application\nCategories=TextEditor;IDE;Development\nX-Ayatana-Desktop-Shortcuts=NewWindow\n\n[NewWindow Shortcut Group]\nName=New Window\nExec=sublime -n\nTargetEnvironment=Unity\n"
+      register: out9_3
+    - name: Adding Mappings To /etc/hosts
+      blockinfile:
+        path: /etc/hosts
+        block: "{{  item.ip }} {{ item.name }}"
+        marker: ""
+      with_items:
+        - { name: www.sublimemerge.com, ip: 0.0.0.0  }
+        - { name: sublimemerge.com, ip: 0.0.0.0 }
+        - { name: www.sublimetext.com, ip: 0.0.0.0 }
+        - { name: sublimetext.com, ip: 0.0.0.0 }
+        - { name: sublimehq.com, ip: 0.0.0.0 }
+        - { name: telemetry.sublimehq.com, ip: 0.0.0.0 }
+        - { name: license.sublimehq.com, ip: 0.0.0.0 }
+        - { name: download.sublimetext.com, ip: 0.0.0.0 }
+        - { name: download.sublimemerge.com, ip: 0.0.0.0 }
+      register: out9_4
+    - name: Loading Iptables Rules
+      iptables:
+        chain: OUTPUT
+        destination: "{{ item }}"
+        jump: REJECT
+      with_items:
+        - 45.55.41.223/32
+        - 45.55.255.55/32
+        - 209.20.83.249/32
+        - 104.236.0.104/32
+      register: out9_5
+###############################################################
+  - block:
+    - name: Extracting XDM
+      unarchive:
+        src: "{{ repo }}/xdm-2018-x64.tar.xz"
+        dest: /tmp/
+        remote_src: yes
+      register: out10_1
+    - name: Installing XDM
+      command: /tmp/install.sh
+      register: out10_2
+###############################################################
+  - block:
+    - name: Extracting Anki
+      unarchive:
+        src: "{{ repo }}/anki-2.1.13-linux-amd64.tar.bz2"
+        dest: /tmp/
+        remote_src: yes
+      register: out11_1
+    - name: Installing Anki
+      command: make install
+      args:
+        chdir: /tmp/anki-2.1.13-linux-amd64/
+      register: out11_2
+###############################################################
+  - block:
+    - name: Allowing Execute Permission To Good Manners
+      file:
+        path: "{{ script }}/greetings.sh"
+        mode: "u+x,g+x,o+x"
+      register: out12_1
+    - name: Adding Good Manners And Some Aliases To Bash
+      blockinfile:
+        path: "{{ house }}/.bashrc"
+        block: "{{ item }}"
+        marker: ""
+      with_items:
+        - "{{ script }}/greetings.sh"
+        - "cut1() { awk -v var=\"$1\" \'{print $var}\' ; }" #date | cut1 1
+        - "cut2() { local var=$2 ; set -- $($1) ; echo \"${!var}\" ; }" #cut2 date 1
+        - "alias cut3='cut -d\" \" -f'" #date | cut3 1
+      register: out12_2
+    - name: Adding Manners To PATH
+      copy:
+        dest: /etc/profile.d/scripts.sh
+        content: "pathmunge {{ script }}"
+        mode: "u+x,g+x,o+x"
+      register: out12_3
+###############################################################
+  - name: Debug1
+    debug:
+      var: out1.results[{{ item }}].changed, out1.results[{{ item }}].dest
+    with_items: [0, 1]
+###############################################################
+  - name: Debug2
+    debug:
+      var: out2.results[{{ item }}].results
+    with_items: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+###############################################################
+  - name: Debug3
+    debug:
+      var: out3.item, out3.stdout, out3.stderr
+###############################################################
+  - name: Debug4
+    debug:
+      var: out4.results[{{ item }}].item, out4.results[{{ item }}].stdout, out4.results[{{ item }}].stderr
+    with_items: [0, 1]
+###############################################################
+  - name: Debug5
+    debug:
+      var: out5.results[{{ item }}].name, out5.results[{{ item }}].state
+    with_items: [0, 1]
+###############################################################
+  - name: Debug6
+    debug:
+      var: out6.results[{{ item }}].item, out6.results.backup_file
+    with_items: [0, 1, 2, 3]
+###############################################################
+  - name: Debug7
+    debug:
+      var: out7.name, out7.state, out7.enabled
+###############################################################
+  - name: Deubg8
+    debug:
+      var: out8_1.path, out8_1.failed, out8_2.src, out8_2.dest, out8_2.changed, out8_2.failed
+###############################################################
+  - name: Debug9
+    debug:
+      var: out9_1.handler, out9_1.src, out9_1.dest, out9_2.state, out9_2.src, out9_2.dest, out9_3.results[0].changed, out9_3.results[0].dest, out9_4.results[0].item, out9_4.results[1].item, out9_4.results[2].item, out9_4.results[3].item, out9_4.results[4].item, out9_4.results[5].item, out9_4.results[6].item, out9_4.results[7].item, out9_4.results[8].item, out9_5.results[0].rule, out9_5.results[1].rule, out9_5.results[2].rule, out9_5.results[3].rule
+###############################################################
+  - name: Debug10
+    debug:
+      var: out10_1.handler, out10_1.src, out10_1.dest, out10_2.cmd, out10_2.stdout_lines[7]
+###############################################################
+  - name: Debug11
+    debug:
+      var: out11_1.handler, out11_1.src, out11_1.dest, out11_2.cmd
+###############################################################
+  - name: Debug12
+    debug:
+      var: out12_1.path, out12_1.mode, out12_2.results[0].changed, out12_2.results[0].item, out12_3.dest, out12_3.mode, out12_3.failed
+###############################################################
+...
+###############################################################
