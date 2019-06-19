@@ -1,5 +1,5 @@
 # AutoPatcher
-Ansible playbook to patch Red Hat Linux based distributions. This patcher includes :
+Ansible playbook to patch Red Hat Linux based distributions. This patcher includes* :
 * ```Extra Packages for Enterprise Linux```
 * ```NTFS-3G```
 * ```PIP```
@@ -16,6 +16,8 @@ Ansible playbook to patch Red Hat Linux based distributions. This patcher includ
 * ```Sublime Text 3```
 * ```Xtreme Download Manager```
 * ```Anki```
+
+*<b>Requires internet connection.</b>
 
 ## Usage:
 ```bash
