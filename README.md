@@ -17,7 +17,7 @@ Ansible playbook to patch Red Hat Linux based distributions. This patcher includ
 * ```Xtreme Download Manager```
 * ```Anki```
 
-*<b>Requires internet connection.</b>
+*<b>Requires internet connection and root access.</b>
 
 ## Usage:
 ```bash
