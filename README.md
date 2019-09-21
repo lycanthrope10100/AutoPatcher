@@ -77,4 +77,4 @@ Xtreme Download Manager (or XDM or XDMAN) is a popular cross-platform download m
 Anki is a free and open-source spaced repetition flashcard program.
 
 ## Debug:
-Refer to Debug module from Line 208-259.
+Refer to the debug module in patch.yml from Line 208-259.
