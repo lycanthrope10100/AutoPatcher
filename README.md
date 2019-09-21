@@ -67,8 +67,6 @@ Network Mapper (or Nmap) is a free and open-source network scanner created by Go
 
 ### Sublime Text 3 {<kbd>https://www.sublimetext.com/3</kbd>}
 Sublime Text is a proprietary cross-platform source code editor with a Python application programming interface (API). It natively supports many programming languages and markup languages, and functions can be added by users with plugins, typically community-built and maintained under free-software licenses.
-* Refer this guide to patch Sublime Text 3207/3208.
-  * ```https://gist.github.com/cipherhater```
 
 ### Xtreme Download Manager {<kbd>http://xdman.sourceforge.net/</kbd>}
 Xtreme Download Manager (or XDM or XDMAN) is a popular cross-platform download manager available for Linux, Windows and Mac OS X. It is also compatible with all major web browsers such as Chrome, Firefox, Safari enabling you to download directly from XDM when you try to download something in your web browser.
