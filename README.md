@@ -1,5 +1,5 @@
 # AutoPatcher
-Ansible playbook to patch Red Hat Linux based distributions. This patcher includes* :
+Ansible playbook to patch Red Hat Linux based distributions. This patcher includes :
 * ```Extra Packages for Enterprise Linux```
 * ```NTFS-3G```
 * ```PIP```
@@ -24,6 +24,7 @@ Ansible playbook to patch Red Hat Linux based distributions. This patcher includ
 ansible-playbook patch.yml
 ```
 
+## Info:
 ### EPEL {<kbd>https://fedoraproject.org/wiki/EPEL</kbd>}
 Extra Packages for Enterprise Linux (or EPEL) is a Fedora Special Interest Group that creates, maintains, and manages a high quality set of additional packages for Enterprise Linux, including, but not limited to, Red Hat Enterprise Linux (RHEL), CentOS and Scientific Linux (SL), Oracle Linux (OL).
 
